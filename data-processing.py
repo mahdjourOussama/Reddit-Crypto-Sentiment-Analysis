@@ -83,5 +83,5 @@ if __name__ == "__main__":
     DATA_DIR = "./database/"
     # test the functions
     scope_query = "luna"  # You can adjust this query based on your
-    df = fetch_reddit_post(scope_query)
+    df = fetch_reddit_post(scope_query, 1)
     print(df.head())

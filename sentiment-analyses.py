@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 from textblob import TextBlob
 from wordcloud import WordCloud
 import pandas as pd
+from dotenv import load_dotenv
 import os
+import openai
+
+load_dotenv()
 
 SENTIMENT_DIR = "./sentiments/"
 os.makedirs(SENTIMENT_DIR, exist_ok=True)
@@ -41,7 +45,7 @@ def analyze_sentement(df, target: str = "text"):
     # Group the range of Polarity into different categories
 
     df[f"{target}_Insight"] = df[f"{target}_Polarity"].apply(getInsight)
-    print(df.head(50))
+
     return df
 
 
@@ -65,12 +69,56 @@ def analyse_database(coin: str = "luna"):
     df = pd.read_csv(f"./database/{coin}_reddit.csv")
     df = df[["comment", "text", "title"]]
     df = analyze_sentement(df, "text")
+    df = analyze_sentiment_openai(df, "text")
     df = analyze_sentement(df, "comment")
+    df = analyze_sentiment_openai(df, "comment")
     df["text_comment"] = df["text"] + df["comment"]
     df = analyze_sentement(df, "text_comment")
+    df = analyze_sentiment_openai(df, "text_comment")
     plot_word_cloud(df, "comment", coin=coin)
     plot_word_cloud(df, "text", coin=coin)
     df.to_csv(f"{SENTIMENT_DIR}/{coin}_reddit.csv", index=False)
+    return df
+
+
+# Set your OpenAI API key
+# Set your OpenAI API key
+openai.api_key = os.environ["OPENAI_API_KEY"]
+
+
+# Function to get sentiment analysis using OpenAI
+def get_sentiment(text):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Or "gpt-4"
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a sentiment analysis assistant. Respond with only one word: Positive, Negative, or Neutral.",
+                },
+                {
+                    "role": "user",
+                    "content": f"Analyze the sentiment of the following text: '{text}'",
+                },
+            ],
+            max_tokens=1,  # Limit the response to a single word
+            temperature=0.0,  # Keep it deterministic for consistent results
+        )
+        # Extract sentiment from the response
+        sentiment = response["choices"][0]["message"]["content"]
+        return sentiment.strip()  # Clean and return the result
+    except Exception as e:
+        return f"Error: {e}"
+
+
+# Analyze sentiment for a DataFrame column
+def analyze_sentiment_openai(df, target: str = "text"):
+    # Drop rows with missing values in the target column
+    df.dropna(subset=[target], inplace=True)
+
+    # Apply the OpenAI sentiment analysis to each row in the target column
+    df[f"{target}_Sentiment_OpenAI"] = df[target].apply(get_sentiment)
+
     return df
 
 

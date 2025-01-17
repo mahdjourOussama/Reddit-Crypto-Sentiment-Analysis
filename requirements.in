@@ -5,3 +5,4 @@ praw
 python-dotenv
 textblob
 wordcloud
+openai == 0.28.0
