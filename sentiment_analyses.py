@@ -64,17 +64,17 @@ def plot_word_cloud(df, target: str = "text", coin: str = "luna"):
     plt.show()
 
 
-def analyse_database(coin: str = "luna"):
+def analyse_database(df, coin: str = "luna"):
     # Analyze the data
-    df = pd.read_csv(f"./database/{coin}_reddit.csv")
+
     df = df[["comment", "text", "title"]]
     df = analyze_sentement(df, "text")
-    df = analyze_sentiment_openai(df, "text")
+    # df = analyze_sentiment_openai(df, "text")
     df = analyze_sentement(df, "comment")
-    df = analyze_sentiment_openai(df, "comment")
+    # df = analyze_sentiment_openai(df, "comment")
     df["text_comment"] = df["text"] + df["comment"]
     df = analyze_sentement(df, "text_comment")
-    df = analyze_sentiment_openai(df, "text_comment")
+    # df = analyze_sentiment_openai(df, "text_comment")
     plot_word_cloud(df, "comment", coin=coin)
     plot_word_cloud(df, "text", coin=coin)
     df.to_csv(f"{SENTIMENT_DIR}/{coin}_reddit.csv", index=False)
@@ -124,4 +124,6 @@ def analyze_sentiment_openai(df, target: str = "text"):
 
 if __name__ == "__main__":
     # test the functions
-    analyse_database()
+    coin = "bitcoin"
+    df = pd.read_csv(f"./database/{coin}_reddit.csv")
+    analyse_database(df)

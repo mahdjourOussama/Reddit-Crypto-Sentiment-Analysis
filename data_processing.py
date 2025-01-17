@@ -43,16 +43,17 @@ def fetch_reddit_post(coin_name: str = "bitcoin", limit: int = 10) -> pd.DataFra
                 "upvote_ratio": submission.upvote_ratio,
                 "id": submission.id,
                 "url": submission.url,
-                "comment": comment.body,
-                "comment_score": comment.score,
+                "comment": comment.body if comment.body else "",
+                "comment_score": comment.score if comment.score else 0,
                 "created_utc": submission.created_utc,
             }
             for submission in submissions
             for comment in submission.comments
+            if isinstance(comment, praw.models.Comment)
         ]
     )
     df = clean_data(df)
-    df.to_csv(f"{DATA_DIR}/{scope_query}_reddit.csv", index=False)
+    df.to_csv(f"{DATA_DIR}/{coin_name}_reddit.csv", index=False)
     return df
 
 
@@ -82,6 +83,6 @@ def clean_data(data):
 if __name__ == "__main__":
     DATA_DIR = "./database/"
     # test the functions
-    scope_query = "luna"  # You can adjust this query based on your
-    df = fetch_reddit_post(scope_query, 1)
+    scope_query = "bitcoin"  # You can adjust this query based on your
+    df = fetch_reddit_post(scope_query, 125)
     print(df.head())
