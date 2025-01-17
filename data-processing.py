@@ -61,8 +61,8 @@ def fetch_reddit_comments(submission_id: str) -> pd.DataFrame:
         [
             {
                 "post": submission.selftext,
-                "comment": comment.body,
-                "comment_score": comment.score,
+                "text": comment.body,
+                "score": comment.score,
                 "post_id": submission.id,
             }
             for comment in submission.comments

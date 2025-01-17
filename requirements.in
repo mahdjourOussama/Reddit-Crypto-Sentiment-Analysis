@@ -3,3 +3,5 @@ transformers
 requests
 praw
 python-dotenv
+textblob
+wordcloud
