@@ -30,9 +30,8 @@ DATA_DIR = "./database/"
 
 def fetch_reddit_post(coin_name: str = "bitcoin", limit: int = 10) -> pd.DataFrame:
     """Fetch the top 10 hot posts containing the coin_name in the subreddit_name"""
-    # Get the subreddit instance
+
     subreddit = reddit.subreddit(subreddit_name)
-    # Retrieve top 10 hot posts containing the coin_name
     submissions = subreddit.search(coin_name, sort="new", limit=limit)
     df = pd.DataFrame(
         [
@@ -44,31 +43,16 @@ def fetch_reddit_post(coin_name: str = "bitcoin", limit: int = 10) -> pd.DataFra
                 "upvote_ratio": submission.upvote_ratio,
                 "id": submission.id,
                 "url": submission.url,
+                "comment": comment.body,
+                "comment_score": comment.score,
                 "created_utc": submission.created_utc,
             }
             for submission in submissions
-        ]
-    )
-    df = clean_data(df)
-    df.to_csv(f"{DATA_DIR}/{scope_query}_reddit_posts.csv", index=False)
-    return df
-
-
-def fetch_reddit_comments(submission_id: str) -> pd.DataFrame:
-    """Fetch the comments of a specific Reddit post"""
-    submission = reddit.submission(id=submission_id)
-    df = pd.DataFrame(
-        [
-            {
-                "post": submission.selftext,
-                "text": comment.body,
-                "score": comment.score,
-                "post_id": submission.id,
-            }
             for comment in submission.comments
         ]
     )
-    df.to_csv(f"{DATA_DIR}/{scope_query}_reddit_comments.csv", index=False)
+    df = clean_data(df)
+    df.to_csv(f"{DATA_DIR}/{scope_query}_reddit.csv", index=False)
     return df
 
 
@@ -82,14 +66,15 @@ def clean_data(data):
     Returns:
         pd.DataFrame: Cleaned data.
     """
+    target = ["title", "text", "comment"]
     # Drop rows with missing titles or text
-    data = data.dropna(subset=["title", "text"])
+    data = data.dropna(subset=target)
 
     # Convert created_utc to datetime
     data["created_datetime"] = pd.to_datetime(data["created_utc"], unit="s")
 
     # Drop duplicate posts based on title and text
-    data = data.drop_duplicates(subset=["title", "text"])
+    data = data.drop_duplicates(subset=target)
 
     return data
 
@@ -99,8 +84,4 @@ if __name__ == "__main__":
     # test the functions
     scope_query = "luna"  # You can adjust this query based on your
     df = fetch_reddit_post(scope_query)
-
-    df_comments = pd.concat(
-        [fetch_reddit_comments(post) for post in df["id"]], ignore_index=True
-    )
-    print(df_comments.head())
+    print(df.head())
